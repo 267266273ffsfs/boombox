@@ -1,0 +1,408 @@
+-- LocalScript (StarterPlayerScripts ou dentro da Tool)
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- =======================
+-- TOOL INVISÍVEL
+-- =======================
+local Tool = Instance.new("Tool")
+Tool.Name = "Boombox Linux"
+Tool.RequiresHandle = true
+Tool.CanBeDropped = false
+
+-- Handle invisível
+local Handle = Instance.new("Part")
+Handle.Name = "Handle"
+Handle.Size = Vector3.new(0.1, 0.1, 0.1)
+Handle.Transparency = 1
+Handle.CanCollide = false
+Handle.Parent = Tool
+
+-- Colocar na backpack
+Tool.Parent = player:WaitForChild("Backpack")
+
+-- Função ativar remote
+local function ativarRemote()
+    local remote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Wear")
+    local args = { 18756289999 }
+    remote:InvokeServer(unpack(args))
+end
+
+Tool.Equipped:Connect(ativarRemote)
+Tool.Unequipped:Connect(ativarRemote)
+
+-- =======================
+-- GUI BOOMBOX
+-- =======================
+local currentSound
+local selectedAudioID
+
+-- GUI (fica escondida até clicar na Tool)
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "LinuxHubBoombox"
+screenGui.ResetOnSpawn = false
+screenGui.Enabled = false
+screenGui.Parent = playerGui
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 380, 0, 170)
+frame.Position = UDim2.new(0.5, -190, 0.5, -85)
+frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+frame.BackgroundTransparency = 0.3
+frame.BorderSizePixel = 0
+frame.Parent = screenGui
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 8)
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, -10, 0, 36)
+title.Position = UDim2.new(0, 5, 0, 5)
+title.BackgroundTransparency = 1
+title.Text = "Linux Hub Boombox"
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.Font = Enum.Font.SourceSansBold
+title.TextSize = 20
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.Parent = frame
+
+local closeBtn = Instance.new("TextButton")
+closeBtn.Size = UDim2.new(0, 36, 0, 36)
+closeBtn.Position = UDim2.new(1, -40, 0, 5)
+closeBtn.Text = "X"
+closeBtn.TextColor3 = Color3.fromRGB(255, 0, 0)
+closeBtn.TextSize = 18
+closeBtn.Font = Enum.Font.SourceSansBold
+closeBtn.BackgroundTransparency = 1
+closeBtn.Parent = frame
+closeBtn.MouseButton1Click:Connect(function()
+    screenGui.Enabled = false
+end)
+
+local textbox = Instance.new("TextBox")
+textbox.Size = UDim2.new(1, -20, 0, 36)
+textbox.Position = UDim2.new(0, 10, 0, 50)
+textbox.BackgroundColor3 = Color3.fromRGB(30,30,30)
+textbox.BackgroundTransparency = 0.2
+textbox.TextColor3 = Color3.fromRGB(255,255,255)
+textbox.PlaceholderText = "Digite o ID do áudio"
+textbox.Font = Enum.Font.SourceSans
+textbox.TextSize = 16
+textbox.ClearTextOnFocus = false
+textbox.Parent = frame
+Instance.new("UICorner", textbox).CornerRadius = UDim.new(0, 6)
+
+local playBtn = Instance.new("TextButton")
+playBtn.Size = UDim2.new(0.45, -10, 0, 36)
+playBtn.Position = UDim2.new(0.05, 0, 0, 100)
+playBtn.BackgroundColor3 = Color3.fromRGB(20,20,20)
+playBtn.BackgroundTransparency = 0.2
+playBtn.TextColor3 = Color3.fromRGB(255,255,255)
+playBtn.Font = Enum.Font.SourceSansBold
+playBtn.TextSize = 18
+playBtn.Text = "Jogar"
+playBtn.Parent = frame
+Instance.new("UICorner", playBtn).CornerRadius = UDim.new(0, 6)
+
+local stopBtn = Instance.new("TextButton")
+stopBtn.Size = UDim2.new(0.45, -10, 0, 36)
+stopBtn.Position = UDim2.new(0.5, 10, 0, 100)
+stopBtn.BackgroundColor3 = Color3.fromRGB(20,20,20)
+stopBtn.BackgroundTransparency = 0.2
+stopBtn.TextColor3 = Color3.fromRGB(255,255,255)
+stopBtn.Font = Enum.Font.SourceSansBold
+stopBtn.TextSize = 18
+stopBtn.Text = "Parar"
+stopBtn.Parent = frame
+Instance.new("UICorner", stopBtn).CornerRadius = UDim.new(0, 6)
+
+-- Lista lateral
+local listFrame = Instance.new("Frame")
+listFrame.Size = UDim2.new(0, 150, 0, 170)
+listFrame.Position = UDim2.new(1, 5, 0, 0)
+listFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+listFrame.Visible = false
+listFrame.Parent = frame
+Instance.new("UICorner", listFrame).CornerRadius = UDim.new(0, 8)
+
+local listClose = Instance.new("TextButton")
+listClose.Size = UDim2.new(0, 24, 0, 24)
+listClose.Position = UDim2.new(1, -28, 0, 4)
+listClose.Text = "X"
+listClose.TextColor3 = Color3.fromRGB(255, 0, 0)
+listClose.Font = Enum.Font.SourceSansBold
+listClose.TextSize = 16
+listClose.BackgroundTransparency = 1
+listClose.Parent = listFrame
+listClose.MouseButton1Click:Connect(function()
+    listFrame.Visible = false
+end)
+
+local scroll = Instance.new("ScrollingFrame")
+scroll.Size = UDim2.new(1, -10, 1, -30)
+scroll.Position = UDim2.new(0, 5, 0, 28)
+scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+scroll.ScrollBarThickness = 6
+scroll.BackgroundTransparency = 1
+scroll.Parent = listFrame
+
+local UIListLayout = Instance.new("UIListLayout", scroll)
+UIListLayout.Padding = UDim.new(0, 5)
+
+-- IDs prontos (você cola sua lista aqui)
+local ids = {
+    {Name = "Yamete Kudasai", ID = 108494476595033},
+    {Name = "Gritinho", ID = 5710016194},
+    {Name = "Jumpscare Horroroso", ID = 85435253347146},
+    {Name = "Áudio Alto", ID = 6855150757},
+    {Name = "Ruído", ID = 120034877160791},
+    {Name = "Jumpscare 2", ID = 110637995610528},
+    {Name = "Risada Da Bruxa Minecraft", ID = 116214940486087},
+    {Name = "The Boiled One", ID = 137177653817621},
+    {Name = "Deitei Um Ave Maria Doido", ID = 128669424001766},
+    {Name = "Mandrake Detected", ID = 9068077052},
+    {Name = "Aaaaaaaaa", ID = 80156405968805},
+    {Name = "AAAHHHH", ID = 9084006093},
+    {Name = "amongus", ID = 6651571134},
+    {Name = "Sus", ID = 6701126635},
+    {Name = "Gritao AAAAAAAAA", ID = 5853668794},
+    {Name = "UHHHHH COFFCOFF", ID = 7056720271},
+    {Name = "SUS", ID = 7153419575},
+    {Name = "Sonic.exe", ID = 2496367477},
+    {Name = "Tubers93 1", ID = 270145703},
+    {Name = "Tubers93 2", ID = 18131809532},
+    {Name = "John's Laugh", ID = 130759239},
+    {Name = "Nao sei KKKK", ID = 6549021381},
+    {Name = "Grito", ID = 80156405968805},
+    {Name = "audio estranho", ID = 7705506391},
+    {Name = "AAAH", ID = 7772283448},
+    {Name = "Gay, gay", ID = 18786647417},
+    {Name = "Bat Hit", ID = 7129073354},
+    {Name = "Nuclear Siren", ID = 675587093},
+    {Name = "Sem ideia de nome KK", ID = 7520729342},
+    {Name = "Grito 2", ID = 91412024101709},
+    {Name = "Estora tímpano", ID = 268116333},
+    {Name = "[ Content Deleted ]", ID = 106835463235574},
+    {Name = "Toma Jack", ID = 132603645477541},
+    {Name = "Pede ifood pede", ID = 133843750864059},
+    {Name = "I Ghost The down", ID = 84663543883498},
+    {Name = "Compre OnLine Na shoope", ID = 8747441609},
+    {Name = "Uh Que Nojo", ID = 103440368630269},
+    {Name = "Sai dai Lava Prato", ID = 101232400175829},
+    {Name = "Seloko num compensa", ID = 78442476709262},
+    {Name = "(NEW) Chimpanzini Bananini Funk", ID = 137148228908678},
+    {Name = "(NEW) Candyland - Tobu", ID = 118939739460633},
+    {Name = "(NEW) Meme do Dom pollo What the hell", ID = 100656590080703},
+    {Name = "(NEW) não to entendendo nd meme estourado", ID = 7962533987},
+    {Name = "pankapakan", ID = 122547522269143},
+    {Name = "Gemido ultra rápido", ID = 128863565301778},
+    {Name = "vai g0z@?", ID = 116293771329297},
+    {Name = "G0z33iiii", ID = 93462644278510},
+    {Name = "Hommmm ", ID = 133135656929513},
+    {Name = "gemido1", ID = 105263704862377},
+    {Name = " gemido2", ID = 92186909873950},
+    {Name = "sus sex", ID = 128137573022197},
+    {Name = "gemido estranho", ID = 131219411501419},
+    {Name = "gemido kawai", ID = 100409245129170},
+    {Name = "Hentai wiaaaaan", ID = 88332347208779},
+    {Name = "iamete cunasai", ID = 108494476595033},
+    {Name = "dodichan onnn...", ID = 134640594695384},
+    {Name = "Loly gemiD0", ID = 119277017538197},
+    {Name = "ai poison", ID = 115870718113313},
+    {Name = "chegachega SUS", ID = 77405864184828},
+    {Name = "uwu", ID = 76820720070248},
+    {Name = "ai meu cuzin", ID = 130714479795369},
+    {Name = "girl audio 2", ID = 84207358477461},
+    {Name = "Hoo ze da manga", ID = 106624090319571},
+    {Name = "ai alexandre de moraes", ID = 107261471941570},
+    {Name = "haaii meme", ID = 120006672159037},
+    {Name = "GoGogo gogogo", ID = 103262503950995},
+    {Name = "Toma jackV2", ID = 100446887985203},
+    {Name = "Toma jack no sol quente", ID = 97476487963273},
+    {Name = "ifood", ID = 133843750864059},
+    {Name = "pelo geito ela ta querendo ram", ID = 94395705857835},
+    {Name = "lula vai todo mundo", ID = 136804576009416},
+    {Name = "coringa", ID = 84663543883498},
+    {Name = "shoope", ID = 8747441609},
+    {Name = "quenojo", ID = 103440368630269},
+    {Name = "sai dai lava prato", ID = 101232400175829},
+    {Name = "se e loko numconpeça", ID = 78442476709262},
+    {Name = "mita sequer que eu too uma", ID = 94889439372168},
+    {Name = "Hoje vou ser tua mulher e tu", ID = 90844637105538},
+    {Name = "Deita aqui eu mandei vc deitar sirens", ID = 100291188941582},
+    {Name = "miau", ID = 131804436682424},
+    {Name = "skibidi", ID = 128771670035179},
+    {Name = "BIRULEIBI", ID = 121569761604968},
+    {Name = "biseabesjnjkasnakjsndjkafb", ID = 133106998846260},
+    {Name = "vai corinthians!!....", ID = 127012936767471},
+    {Name = "my sigman", ID = 103431815659907},
+    {Name = "mama", ID = 106850066985594},
+    {Name = "OH MY GOD", ID = 73349649774476},
+    {Name = "aahhh plankton meme", ID = 95982351322190},
+    {Name = "CHINABOY", ID = 84403553163931},
+    {Name = "PASTOR MIRIM E A LÍNGUA DOS ANJOS", ID = 71153532555470},
+    {Name = "Sai d3sgraç@", ID = 106973692977609},
+    {Name = "opa salve tudo bem?", ID = 80870678096428},
+    {Name = "OLHA O CARRO DO DANONE", ID = 110493863773948},
+    {Name = "Nãoooo, Nãoooo, Nãooo!!!!!", ID = 95825536480898},
+    {Name = "UM PÉ DE SIRIGUELA KK", ID = 112804043442210},
+    {Name = "e o carro da pamonha", ID = 94951629392683},
+    {Name = "BOM DIAAAAAAAAAA", ID = 136579844511260},
+    {Name = "ai-meu-chiclete", ID = 92911732806153},
+    {Name = "posso te ligar ou tua mulher...", ID = 103211341252816},
+    {Name = "Boa chi joga muito cara", ID = 110707564387669},
+    {Name = "Oqueee meme", ID = 120092799810101},
+    {Name = "kkk muito fei", ID = 79241074803021},
+    {Name = "lula cade o ze gotinha", ID = 86012585992725},
+    {Name = "morreu", ID = 8872409975},
+    {Name = "a-pia-ta-cheia-de-louca", ID = 98076927129047},
+    {Name = "Mahito killSong", ID = 128669424001766},
+    {Name = "Sucumba", ID = 7946300950},
+    {Name = "nem clicou o thurzin", ID = 84428355313544},
+    {Name = "fiui OLHA MENSAGEM", ID = 121668429878811},
+    {Name = "tooomeee", ID = 128319664118768},
+    {Name = "risada de ladrao", ID = 133065882609605},
+    {Name = "E o PIX nada ainda", ID = 113831443375212},
+    {Name = "Vo nada vo nada", ID = 89093085290586},
+    {Name = "Eli gosta", ID = 105012436535315},
+    {Name = "um cavalo de tres pernas?", ID = 8164241439},
+    {Name = "voces sao um bado de fdp", ID = 8232773326},
+    {Name = "HAHA TROLLEI ATÉ VOCÊ", ID = 7021794555},
+    {Name = "Calaboca Kenga", ID = 86494561679259},
+    {Name = "alvincut", ID = 88788640194373},
+    {Name = "e a risada faz como?", ID = 140713372459057},
+    {Name = "voce deve se m@t4", ID = 100227426848009},
+    {Name = "receba", ID = 94142662616215},
+    {Name = "UUIIII", ID = 73210569653520},
+    {Name = "sai", ID = 121169949217007},
+    {Name = "risada boa dms", ID = 127589011971759},
+    {Name = "vacilo perna de pau", ID = 106809680656199},
+    {Name = "gomo gomo no!!!", ID = 137067472449625},
+    {Name = "arroto", ID = 140203378050178},
+    {Name = "iraaaa", ID = 136752451575091},
+    {Name = "não fica se achando muito não", ID = 101588606280167},
+    {Name = "WhatsApp notificaçaoV1", ID = 107004225739474},
+    {Name = "WhatsApp notificaçaoV2", ID = 18850631582},
+    {Name = "SamsungV1", ID = 123767635061073},
+    {Name = "SamsungV2", ID = 96579234730244},
+    {Name = "Shiiii", ID = 120566727202986},
+    {Name = "ai_tomaa miku", ID = 139770074770361},
+    {Name = "Miku Miku", ID = 72812231495047},
+    {Name = "kuru_kuru", ID = 122465710753374},
+    {Name = "PM ROCAM", ID = 96161547081609},
+    {Name = "cavalo!!", ID = 78871573440184},
+    {Name = "deixa os garoto brinca", ID = 80291355054807},
+    {Name = "flamengo", ID = 137774355552052},
+    {Name = "sai do mei satnas", ID = 127944706557246},
+    {Name = "namoral agora e a hora", ID = 120677947987369},
+    {Name = "n pode me chutar pq seu celebro e burro", ID = 82284055473737},
+    {Name = "vc ta fudido vou te pegar", ID = 120214772725166},
+    {Name = "deley", ID = 102906880476838},
+    {Name = "Tu e um beta", ID = 130233956349541},
+    {Name = "Porfavor n tira eu nao", ID = 85321374020324},
+    {Name = "Olá beleza vc pode me dá muitos", ID = 74235334504693},
+    {Name = "Discord sus", ID = 122662798976905},
+    {Name = "rojao apito", ID = 6549021381},
+    {Name = "off", ID = 1778829098},
+    {Name = "Kazuma kazuma", ID = 127954653962405},
+    {Name = "sometourado", ID = 123592956882621},
+    {Name = "Estouradoespad", ID = 136179020015211},
+    {Name = "Alaku bommm", ID = 110796593805268},
+    {Name = "busss", ID = 139841197791567},
+    {Name = "Estourado wItb", ID = 137478052262430},
+    {Name = "sla", ID = 116672405522828},
+    {Name = "HA HA HA", ID = 138236682866721}
+}
+
+for _, data in ipairs(ids) do
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, -5, 0, 28)
+    btn.Text = data.Name
+    btn.TextColor3 = Color3.fromRGB(255,255,255)
+    btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+    btn.Font = Enum.Font.SourceSans
+    btn.TextSize = 14
+    btn.Parent = scroll
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+
+    btn.MouseButton1Click:Connect(function()
+        textbox.Text = tostring(data.ID)
+        playAudio(data.ID)
+    end)
+end
+
+scroll.CanvasSize = UDim2.new(0, 0, 0, UIListLayout.AbsoluteContentSize.Y)
+
+-- Botão abrir lista
+local openListBtn = Instance.new("TextButton")
+openListBtn.Size = UDim2.new(0, 28, 0, 28)
+openListBtn.Position = UDim2.new(1, -36, 1, -36)
+openListBtn.Text = ">"
+openListBtn.TextColor3 = Color3.fromRGB(0, 255, 0)
+openListBtn.Font = Enum.Font.SourceSansBold
+openListBtn.TextSize = 18
+openListBtn.BackgroundTransparency = 1
+openListBtn.Parent = frame
+openListBtn.MouseButton1Click:Connect(function()
+    listFrame.Visible = not listFrame.Visible
+end)
+
+-- Funções do áudio
+local function playAudio(ID)
+    if not ID then return end
+    if typeof(ID) ~= "number" then ID = tonumber(ID) end
+    if not ID then return end
+
+    local GunSoundEvent = ReplicatedStorage:FindFirstChild("1Gu1nSound1s", true)
+    if GunSoundEvent then
+        GunSoundEvent:FireServer(workspace, ID, 1)
+    end
+
+    if currentSound then
+        currentSound:Stop()
+        currentSound:Destroy()
+    end
+
+    local sound = Instance.new("Sound")
+    sound.SoundId = "rbxassetid://" .. ID
+    sound.Volume = 1
+    sound.Looped = false
+    sound.Parent = player.Character and player.Character:FindFirstChild("HumanoidRootPart") or workspace
+    sound:Play()
+    currentSound = sound
+end
+
+local function stopAudio()
+    if currentSound then
+        currentSound:Stop()
+        currentSound:Destroy()
+        currentSound = nil
+    end
+end
+
+-- Botões
+playBtn.MouseButton1Click:Connect(function()
+    if textbox.Text ~= "" then
+        selectedAudioID = tonumber(textbox.Text)
+        playAudio(selectedAudioID)
+    end
+end)
+
+stopBtn.MouseButton1Click:Connect(function()
+    stopAudio()
+end)
+
+textbox.FocusLost:Connect(function(enterPressed)
+    if enterPressed and textbox.Text ~= "" then
+        selectedAudioID = tonumber(textbox.Text)
+        playAudio(selectedAudioID)
+    end
+end)
+
+-- =======================
+-- CLICK NA TOOL (PC e MOBILE)
+-- =======================
+Tool.Activated:Connect(function()
+    screenGui.Enabled = not screenGui.Enabled
+end)
