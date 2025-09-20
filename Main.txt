@@ -9,7 +9,7 @@ local playerGui = player:WaitForChild("PlayerGui")
 -- TOOL INVISÍVEL
 -- =======================
 local Tool = Instance.new("Tool")
-Tool.Name = "Boombox Linux"
+Tool.Name = "Boombox Linux Fe all"
 Tool.RequiresHandle = true
 Tool.CanBeDropped = false
 
